@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hehe</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❤️</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a0a0a 0%, #2d0f0f 100%);
+            color: #f0e6e6;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: linear-gradient(to bottom, rgba(90, 10, 15, 0.95), rgba(60, 5, 10, 0.95));
+            padding: 20px 15px;
+            overflow-y: auto;
+            border-right: 2px solid #8b0000;
+            box-shadow: 3px 0 10px rgba(139, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(30, 5, 5, 0.8);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #8b0000;
+            border-radius: 4px;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 100, 100, 0.3);
+            position: relative;
+        }
+
+        .sidebar-header h1 {
+            font-size: 24px;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            color: #e0b3b3;
+        }
+
+        .impala-icon {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 24px;
+            color: #ff6b6b;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(40, 10, 10, 0.5);
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #e0b3b3;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-select {
+            flex: 1;
+            padding: 10px 15px;
+            background: rgba(40, 10, 10, 0.8);
+            border: 1px solid rgba(139, 0, 0, 0.5);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+        }
+
+        .episode-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .episode-item {
+            background: rgba(40, 10, 10, 0.7);
+            border: 1px solid rgba(139, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .episode-item:hover {
+            background: rgba(70, 15, 15, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
+            border-color: #ff6b6b;
+        }
+
+        .episode-item.active {
+            background: rgba(90, 15, 15, 0.9);
+            border-color: #ff6b6b;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .episode-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #ff6b6b;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .episode-item.active::before {
+            opacity: 1;
+        }
+
+        .episode-number {
+            font-size: 14px;
+            color: #ff9999;
+            margin-bottom: 5px;
+        }
+
+        .episode-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .episode-monster {
+            font-size: 14px;
+            color: #ffb3b3;
+            background: rgba(139, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .episode-location {
+            font-size: 12px;
+            color: #e0b3b3;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .episode-rating {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(139, 0, 0, 0.7);
+            color: #ffcc00;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* Map Styles */
+        .map-container {
+            position: relative;
+            height: 100vh;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-btn {
+            background: rgba(40, 10, 10, 0.9);
+            border: 1px solid rgba(139, 0, 0, 0.5);
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .map-btn:hover {
+            background: rgba(70, 15, 15, 0.9);
+            border-color: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        /* Season Legend */
+        .season-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(40, 10, 10, 0.9);
+            border: 1px solid rgba(139, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #fff;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .season-legend h3 {
+            margin-bottom: 8px;
+            color: #ff6b6b;
+            font-size: 16px;
+        }
+
+        .season-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .season-color {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid white;
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content-wrapper {
+            background: linear-gradient(to bottom, #2d0f0f, #1a0a0a);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+            border: 1px solid #8b0000;
+        }
+
+        .leaflet-popup-content {
+            margin: 15px;
+            color: #f0e6e6;
+            width: 320px !important;
+        }
+
+        .popup-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 107, 107, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .popup-monster {
+            font-size: 14px;
+            color: #ffb3b3;
+            background: rgba(139, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .popup-summary {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .popup-thumbnail {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(139, 0, 0, 0.5);
+        }
+
+        .popup-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .popup-link {
+            display: block;
+            text-align: center;
+            background: #8b0000;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .popup-link:hover {
+            background: #a52a2a;
+        }
+
+        .popup-link-alt {
+            background: #5a0f0f;
+        }
+
+        .popup-link-alt:hover {
+            background: #6a1f1f;
+        }
+
+        /* Mystery Popup Styles */
+        .mystery-popup {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .mystery-emoji {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .mystery-text {
+            font-size: 16px;
+            color: #ffcc00;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 40vh 60vh;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 2px solid #8b0000;
+            }
+            
+            .map-controls, .season-legend {
+                position: relative;
+                top: auto;
+                right: auto;
+                bottom: auto;
+                left: auto;
+                margin: 10px;
+            }
+            
+            .map-controls {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>For Mi Amor</h1>
+                <p>otherwise known as my M&M</p>
+                <div class="impala-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalEpisodes">35</div>
+                    <div class="stat-label">Episodes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalMonsters">0</div>
+                    <div class="stat-label">Monster Types</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalLocations">0</div>
+                    <div class="stat-label">Locations</div>
+                </div>
+            </div>
+            
+            <div class="filter-container">
+                <select id="seasonFilter" class="filter-select">
+                    <option value="all">All Seasons</option>
+                    <option value="1">Season 1</option>
+                    <option value="2">Season 2</option>
+                    <option value="3">Season 3</option>
+                    <option value="4">Season 4</option>
+                    <option value="5">Season 5</option>
+                    <option value="6">Season 6</option>
+                    <option value="7">Season 7</option>
+                    <option value="8">Season 8</option>
+                    <option value="9">Season 9</option>
+                    <option value="10">Season 10</option>
+                    <option value="11">Season 11</option>
+                    <option value="12">Season 12</option>
+                    <option value="13">Season 13</option>
+                    <option value="14">Season 14</option>
+                    <option value="15">Season 15</option>
+                </select>
+                
+                <select id="monsterFilter" class="filter-select">
+                    <option value="all">All Monsters</option>
+                    <option value="Ghost">Ghosts</option>
+                    <option value="Demon">Demons</option>
+                    <option value="Angel">Angels</option>
+                    <option value="Vampire">Vampires</option>
+                    <option value="Reaper">Reapers</option>
+                    <option value="Djinn">Djinn</option>
+                    <option value="Wendigo">Wendigo</option>
+                    <option value="Leviathans">Leviathans</option>
+                    <option value="Trickster">Trickster</option>
+                </select>
+            </div>
+            
+            <div class="episode-list" id="episodeList">
+                <!-- Episode list will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-controls">
+                <button class="map-btn" id="resetView">
+                    <i class="fas fa-home"></i> Reset View
+                </button>
+                <button class="map-btn" id="toggleMarkers">
+                    <i class="fas fa-map-marker-alt"></i> Toggle Markers
+                </button>
+                <button class="map-btn" id="showAllEpisodes">
+                    <i class="fas fa-eye"></i> Show All
+                </button>
+                <button class="map-btn" id="showMysteryMarkers">
+                    <i class="fas fa-question"></i> Mystery Spots
+                </button>
+            </div>
+            
+            <div class="season-legend">
+                <h3>Season Colors</h3>
+                <div class="season-colors">
+                    <div class="season-color">
+                        <div class="color-box" style="background-color: #ff6b6b;"></div>
+                        <span>Season 1-5</span>
+                    </div>
+                    <div class="season-color">
+                        <div class="color-box" style="background-color: #ffa500;"></div>
+                        <span>Season 6-10</span>
+                    </div>
+                    <div class="season-color">
+                        <div class="color-box" style="background-color: #9b59b6;"></div>
+                        <span>Season 11-15</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Enhanced episode data with location names and ratings
+        const episodes = [
+            {
+                id: 1,
+                number: "S01E01",
+                title: "Pilot",
+                monster: "Woman in White",
+                location: [39.8283, -98.5795],
+                locationName: "Jericho, Kansas",
+                summary: "Sam and Dean Winchester begin their journey hunting the Woman in White, a vengeful spirit who preys on unfaithful men.",
+                thumb: "https://image.tmdb.org/t/p/original/iSeqdxMYlRhWoJpRcRTZknygVfl.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=1&e=1&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845448",
+                season: 1,
+                rating: 8.1,
+                featured: true
+            },
+            {
+                id: 2,
+                number: "S01E02",
+                title: "Wendigo",
+                monster: "Wendigo",
+                location: [39.5501, -105.7821],
+                locationName: "Blackwater Ridge, Colorado",
+                summary: "The brothers investigate mysterious disappearances in the Colorado wilderness, discovering a Wendigo is responsible.",
+                thumb: "https://image.tmdb.org/t/p/original/9SsuC4koeryryoUNgnQYAwkKGAV.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=1&e=2&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845478",
+                season: 1,
+                rating: 7.8
+            },
+            {
+                id: 3,
+                number: "S02E01",
+                title: "In My Time of Dying",
+                monster: "Reaper",
+                location: [39.8283, -98.5795],
+                locationName: "St. Louis, Missouri",
+                summary: "After the car crash, Dean makes a deal with a Reaper to save his brother's life, with dire consequences.",
+                thumb: "https://image.tmdb.org/t/p/original/5D3Y02IOyIgpXHoHAytCeFCUrDf.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=2&e=1&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845529",
+                season: 2,
+                rating: 8.7
+            },
+            {
+                id: 4,
+                number: "S03E08",
+                title: "A Very Supernatural Christmas",
+                monster: "Anti-Claus, Pagan Gods",
+                location: [44.3148, -85.6024],
+                locationName: "Terre Haute, Indiana",
+                summary: "Sam and Dean investigate mysterious deaths during Christmas, discovering ancient pagan gods are behind them.",
+                thumb: "https://image.tmdb.org/t/p/original/bkXijc5t4FNaPu9tAuoY3t4FsOK.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=3&e=8&me=16",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845619",
+                season: 3,
+                rating: 8.9,
+                featured: true
+            },
+            {
+                id: 5,
+                number: "S04E01",
+                title: "Lazarus Rising",
+                monster: "Angel",
+                location: [39.8283, -98.5795],
+                locationName: "Pontiac, Illinois",
+                summary: "Dean returns from Helly, rescued by the angel Castiel, who reveals that God has work for him.",
+                thumb: "https://image.tmdb.org/t/p/original/aRQe9Zcu1PUZwhUFb9zFuH8TbQ3.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=4&e=1&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845664",
+                season: 4,
+                rating: 9.2
+            },
+            {
+                id: 6,
+                number: "S05E22",
+                title: "Swan Song",
+                monster: "Lucifer, Archangels",
+                location: [41.8781, -87.6298],
+                locationName: "Detroit, Michigan",
+                summary: "The ultimate battle between Lucifer and Michael takes place, with Sam making the ultimate sacrifice.",
+                thumb: "https://image.tmdb.org/t/p/original/tUbTbLw8kjYT8qTARN1z7C294id.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=5&e=22&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.5315737",
+                season: 5,
+                rating: 9.6,
+                featured: true
+            },
+            {
+                id: 7,
+                number: "S07E01",
+                title: "Meet the New Boss",
+                monster: "Leviathans",
+                location: [45.5051, -122.6750],
+                locationName: "Portland, Oregon",
+                summary: "Castiel becomes a god after absorbing souls from Purgatory, but the Leviathans break free and take control.",
+                thumb: "https://image.tmdb.org/t/p/original/k96IfYNrybKIMN4rHOD0awVVpbZ.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=7&e=1&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845772",
+                season: 7,
+                rating: 8.5
+            },
+            {
+                id: 8,
+                number: "S10E05",
+                title: "Fan Fiction",
+                monster: "Muse",
+                location: [40.7128, -74.0060],
+                locationName: "New York City, New York",
+                summary: "Sam and Dean investigate a high school musical based on their lives, discovering a real muse is influencing the production.",
+                thumb: "https://image.tmdb.org/t/p/original/vFQ3C48Sj7PFHkgCnPOBR3CcBf9.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=10&e=5&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846150",
+                season: 10,
+                rating: 9.4,
+                featured: true
+            },
+            {
+                id: 9,
+                number: "S12E09",
+                title: "First Blood",
+                monster: "Government Agents",
+                location: [38.9072, -77.0369],
+                locationName: "Washington D.C.",
+                summary: "Sam and Dean are captured by government agents but escape with help from their allies.",
+                thumb: "https://image.tmdb.org/t/p/original/9Qc4xpudV5Q9c976GfFYXknKBD0.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=12&e=9&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846210",
+                season: 12,
+                rating: 8.3
+            },
+            {
+                id: 10,
+                number: "S15E20",
+                title: "Carry On",
+                monster: "Vampires",
+                location: [39.8283, -98.5795],
+                locationName: "Lebanon, Kansas",
+                summary: "The series finale sees the Winchesters' final hunt and the conclusion of their epic story.",
+                thumb: "https://image.tmdb.org/t/p/original/frpiXDldkh3P2VtNPxetsRawbpm.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=15&e=20&me=20",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.5493661",
+                season: 15,
+                rating: 8.7,
+                featured: true
+            },
+            {
+                id: 11,
+                number: "S01E12",
+                title: "Faith",
+                monster: "Reaper",
+                location: [37.7749, -122.4194],
+                locationName: "Red Lodge, Montana",
+                summary: "Dean is critically injured during a hunt, leading Sam to seek out a faith healer with mysterious powers.",
+                thumb: "https://image.tmdb.org/t/p/original/FwKYN4eAgBdtNXw3gMANIlglL6.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=1&e=12&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845502",
+                season: 1,
+                rating: 8.4
+            },
+            {
+                id: 12,
+                number: "S02E20",
+                title: "What Is and What Should Never Be",
+                monster: "Djinn",
+                location: [42.3601, -71.0589],
+                locationName: "Boston, Massachusetts",
+                summary: "Dean is attacked by a Djinn and wakes up in an alternate reality where his mother never died.",
+                thumb: "https://image.tmdb.org/t/p/original/bB3PZ6JwmyGTri6lLhJWyzK7XHK.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=2&e=20&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845535",
+                season: 2,
+                rating: 9.1
+            },
+            {
+                id: 13,
+                number: "S03E11",
+                title: "Mystery Spot",
+                monster: "Trickster",
+                location: [33.4484, -112.0740],
+                locationName: "Broward County, Florida",
+                summary: "Sam finds himself trapped in a time loop, reliving the same day over and over as Dean dies repeatedly.",
+                thumb: "https://image.tmdb.org/t/p/original/rn7s7Tc5tnlnOGB38Tafn1lF7qB.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=3&e=11&me=16",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845616",
+                season: 3,
+                rating: 9.5,
+                featured: true
+            },
+            {
+                id: 14,
+                number: "S04E18",
+                title: "The Monster at the End of This Book",
+                monster: "Demons",
+                location: [47.6062, -122.3321],
+                locationName: "Seattle, Washington",
+                summary: "The brothers discover a series of books that accurately detail their lives, written by a prophet named Chuck.",
+                thumb: "https://image.tmdb.org/t/p/original/rp3992eCMZlN8Ydv6lghXvK074X.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=4&e=18&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845673",
+                season: 4,
+                rating: 9.0
+            },
+            {
+                id: 15,
+                number: "S05E04",
+                title: "The End",
+                monster: "Croatoan Virus",
+                location: [34.0522, -118.2437],
+                locationName: "Los Angeles, California",
+                summary: "Dean is transported five years into a future where Croatoan virus has devastated humanity and Lucifer rules.",
+                thumb: "https://image.tmdb.org/t/p/original/qxeXaPFRbKekNwCQ9EEQRkJVjGV.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=5&e=4&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845733",
+                season: 5,
+                rating: 8.9
+            },
+            {
+                id: 16,
+                number: "S06E15",
+                title: "The French Mistake",
+                monster: "Angels",
+                location: [34.0522, -118.2437],
+                locationName: "Vancouver, Canada",
+                summary: "Sam and Dean are transported to an alternate universe where they are actors named Jared Padalecki and Jensen Ackles.",
+                thumb: "https://image.tmdb.org/t/p/original/gyUCL26zwN6pluHPw8Cf3wvnLUr.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=6&e=15&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845820",
+                season: 6,
+                rating: 9.3,
+                featured: true
+            },
+            {
+                id: 17,
+                number: "S07E10",
+                title: "Death's Door",
+                monster: "Reaper",
+                location: [39.8283, -98.5795],
+                locationName: "Sioux Falls, South Dakota",
+                summary: "Bobby is shot and fights for his life while trapped in his own mind, reliving key memories.",
+                thumb: "https://image.tmdb.org/t/p/original/fsQ7GeSnbtO9M4m5HT1hS3yAHLO.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=7&e=10&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845802",
+                season: 7,
+                rating: 9.2
+            },
+            {
+                id: 18,
+                number: "S08E23",
+                title: "Sacrifice",
+                monster: "Demons",
+                location: [39.8283, -98.5795],
+                locationName: "Stull Cemetery, Kansas",
+                summary: "Sam is willing to make the ultimate sacrifice to close the gates of Helly forever, while Dean faces difficult choices.",
+                thumb: "https://image.tmdb.org/t/p/original/f9YUVfe5guUUv9EvTZXt3hDf743.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=8&e=23&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845994",
+                season: 8,
+                rating: 9.1
+            },
+            {
+                id: 19,
+                number: "S09E23",
+                title: "Do You Believe in Miracles?",
+                monster: "Knight of Helly",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "Dean becomes a demon after being mortally wounded by Metatron, changing everything for the Winchesters.",
+                thumb: "https://image.tmdb.org/t/p/original/9vlbX0RUxQuBLB32KSV4dVmivum.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=9&e=23&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845988",
+                season: 9,
+                rating: 8.8
+            },
+            {
+                id: 20,
+                number: "S10E22",
+                title: "The Prisoner",
+                monster: "Demons",
+                location: [40.7128, -74.0060],
+                locationName: "New York City, New York",
+                summary: "Dean goes after the Stynes family alone, crossing lines he never thought he would in his quest for revenge.",
+                thumb: "https://image.tmdb.org/t/p/original/aiHs8O6jVvfGk6j7R85pRXvQ2HQ.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=10&e=22&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846162",
+                season: 10,
+                rating: 8.6
+            },
+            {
+                id: 21,
+                number: "S11E04",
+                title: "Baby",
+                monster: "Ghosts",
+                location: [39.8283, -98.5795],
+                locationName: "Lebanon, Kansas",
+                summary: "An entire episode shot from the perspective of the Impala as the brothers hunt a group of spectral bikers.",
+                thumb: "https://image.tmdb.org/t/p/original/6MxSNJ5UA8AVlCfmLhltsqBbWLV.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=11&e=4&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846057",
+                season: 11,
+                rating: 9.4,
+                featured: true
+            },
+            {
+                id: 22,
+                number: "S11E20",
+                title: "Don't Call Me Shurley",
+                monster: "God, Amara",
+                location: [36.1699, -115.1398],
+                locationName: "Las Vegas, Nevada",
+                summary: "Metatron discovers that Chuck is actually God, while Sam and Dean search for a way to stop the Darkness.",
+                thumb: "https://image.tmdb.org/t/p/original/7y7YnAQoE2COuYPCwKAbclhA6cO.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=11&e=20&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846045",
+                season: 11,
+                rating: 9.0
+            },
+            {
+                id: 23,
+                number: "S12E02",
+                title: "Mamma Mia",
+                monster: "British Men of Letters",
+                location: [51.5074, -0.1278],
+                locationName: "London, England",
+                summary: "Sam and Dean travel to England to rescue their mother from the British Men of Letters.",
+                thumb: "https://image.tmdb.org/t/p/original/avtITe1ibWR5V0o5tCM1SO1ymVe.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=12&e=2&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846186",
+                season: 12,
+                rating: 8.2
+            },
+            {
+                id: 24,
+                number: "S13E10",
+                title: "Wayward Sisters",
+                monster: "Demons",
+                location: [42.8777, -97.3805],
+                locationName: "Sioux Falls, South Dakota",
+                summary: "Claire and Jody recruit a group of hunter women to rescue Sam and Dean from an apocalyptic world.",
+                thumb: "https://image.tmdb.org/t/p/original/uvwsgMxFdeP9KTOnhMMujf9daK3.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=13&e=10&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846258",
+                season: 13,
+                rating: 8.5
+            },
+            {
+                id: 25,
+                number: "S14E13",
+                title: "Lebanon",
+                monster: "Djinn",
+                location: [39.8283, -98.5795],
+                locationName: "Lebanon, Kansas",
+                summary: "Sam and Dean use a magical artifact to wish for their family to be whole again, bringing their father back.",
+                thumb: "https://image.tmdb.org/t/p/original/bFEYwpF3ErAYu3fbol9b1Oekawm.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=14&e=13&me=20",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846306",
+                season: 14,
+                rating: 9.3,
+                featured: true
+            },
+            {
+                id: 26,
+                number: "S01E19",
+                title: "Provenance",
+                monster: "Ghosts",
+                location: [43.6532, -79.3832],
+                locationName: "Toronto, Canada",
+                summary: "The brothers investigate a haunted painting that seems to be causing deaths in an affluent family.",
+                thumb: "https://image.tmdb.org/t/p/original/1LLOdZUxTP47Vb9Ye2sqo31cRv9.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=1&e=19&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845499",
+                season: 1,
+                rating: 7.9
+            },
+            {
+                id: 27,
+                number: "S02E21",
+                title: "All Helly Breaks Loose: Part 1",
+                monster: "Demons",
+                location: [35.4676, -97.5164],
+                locationName: "Cold Oak, South Dakota",
+                summary: "Sam is kidnapped and taken to a ghost town where he must fight other psychic children to the death.",
+                thumb: "https://image.tmdb.org/t/p/original/qf6LWrMZ819qZLSII6pDMCro5sH.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=2&e=21&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845610",
+                season: 2,
+                rating: 9.0
+            },
+            {
+                id: 28,
+                number: "S04E22",
+                title: "Lucifer Rising",
+                monster: "Archangels, Demons",
+                location: [41.8781, -87.6298],
+                locationName: "Chicago, Illinois",
+                summary: "The final seal is broken and Lucifer is released from his cage, setting up the ultimate confrontation.",
+                thumb: "https://image.tmdb.org/t/p/original/jM8JbXHdi2dZTZxOpKNC1gmkVk3.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=4&e=22&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845667",
+                season: 4,
+                rating: 9.2
+            },
+            {
+                id: 29,
+                number: "S06E20",
+                title: "The Man Who Would Be King",
+                monster: "Demons, Angels",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "Castiel reveals his secret alliance with Crowley and his plan to become the new God.",
+                thumb: "https://image.tmdb.org/t/p/original/zkOiHHIQ3WyzItcoIKW3h2xVScq.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=6&e=20&me=22",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845877",
+                season: 6,
+                rating: 8.8
+            },
+            {
+                id: 30,
+                number: "S08E17",
+                title: "Goodbye Stranger",
+                monster: "Demons, Angels",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "Meg helps the Winchesters and Castiel track down the Angel Tablet before it falls into Crowley's hands.",
+                thumb: "https://image.tmdb.org/t/p/original/A6I7cm05s0IDaW1mohp8MUsPkFs.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=8&e=17&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845913",
+                season: 8,
+                rating: 8.7
+            },
+            {
+                id: 31,
+                number: "S09E01",
+                title: "I Think I'm Gonna Like It Here",
+                monster: "Angels",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "Dean adjusts to life without Sam, who is possessed by an angel named Ezekiel who is healing him.",
+                thumb: "https://image.tmdb.org/t/p/original/reLKD5eh5O4fbipDVwcJPvEkvdW.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=9&e=1&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4845916",
+                season: 9,
+                rating: 8.4
+            },
+            {
+                id: 32,
+                number: "S10E17",
+                title: "Inside Man",
+                monster: "Demons",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "Bobby helps Sam and Dean from Heaven while Castiel searches for a way to remove the Mark of Cain from Dean.",
+                thumb: "https://image.tmdb.org/t/p/original/jWyEhBgSXi261GnjLDnzNLH4niy.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=10&e=17&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846144",
+                season: 10,
+                rating: 8.5
+            },
+            {
+                id: 33,
+                number: "S11E23",
+                title: "Alpha and Omega",
+                monster: "God, Amara",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "God and Amara face off in an epic battle while the Winchesters try to find a way to save the world.",
+                thumb: "https://image.tmdb.org/t/p/original/z56RwqT5AUS6nfqNVlrhffRl5wa.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=11&e=23&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846048",
+                season: 11,
+                rating: 8.9
+            },
+            {
+                id: 34,
+                number: "S12E23",
+                title: "All Along the Watchtower",
+                monster: "British Men of Letters",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "The Winchesters and their allies make their final stand against the British Men of Letters.",
+                thumb: "https://image.tmdb.org/t/p/original/uxmhXLFOo1LfSo9UIk0tmp7dPlw.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=12&e=23&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846204",
+                season: 12,
+                rating: 8.6
+            },
+            {
+                id: 35,
+                number: "S13E23",
+                title: "Let the Good Times Roll",
+                monster: "Alternate Michael",
+                location: [39.8283, -98.5795],
+                locationName: "The Bunker, Kansas",
+                summary: "The battle against Alternate Michael comes to a head as he threatens to unleash his army on our world.",
+                thumb: "https://image.tmdb.org/t/p/original/jBQaHEIXeGqJB7STG1arnrhRoFx.jpg",
+                watch_link: "https://moviepire.net/watch/1622?s=13&e=23&me=23",
+                alt_link: "https://hdtoday.gg/watch-tv/watch-supernatural-hd-39542.4846177",
+                season: 13,
+                rating: 8.7
+            }
+        ];
+
+        // Initialize the map
+        const map = L.map('map').setView([39.8283, -98.5795], 4);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Create custom icons for different seasons
+        function getIconForSeason(season) {
+            let color;
+            if (season <= 5) color = '#ff6b6b'; // Early seasons - red
+            else if (season <= 10) color = '#ffa500'; // Middle seasons - orange
+            else color = '#9b59b6'; // Later seasons - purple
+            
+            return L.divIcon({
+                html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${color}70;"></div>`,
+                iconSize: [16, 16],
+                className: 'season-icon'
+            });
+        }
+
+        // Create custom mystery icon
+        const mysteryIcon = L.divIcon({
+            html: '<div style="background-color: #ffcc00; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);"></div>',
+            iconSize: [20, 20],
+            className: 'mystery-dot-icon'
+        });
+
+        // Create markers and popups for each episode
+        const markers = [];
+        let markerGroup = L.layerGroup().addTo(map);
+        
+        episodes.forEach(episode => {
+            const popupContent = `
+                <div class="popup-content">
+                    <div class="popup-title">${episode.title}</div>
+                    <div class="popup-monster">${episode.monster}</div>
+                    <img src="${episode.thumb}" alt="${episode.title}" class="popup-thumbnail">
+                    <div class="popup-summary">${episode.summary}</div>
+                    <div class="popup-links">
+                        <a href="${episode.watch_link}" target="_blank" class="popup-link">Watch Episode Here</a>
+                        <a href="${episode.alt_link}" target="_blank" class="popup-link popup-link-alt">Click This If First Link Doesn't Work</a>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker(episode.location, { 
+                icon: getIconForSeason(episode.season)
+            }).bindPopup(popupContent);
+            
+            markers.push({
+                id: episode.id,
+                marker: marker,
+                episode: episode
+            });
+            
+            markerGroup.addLayer(marker);
+        });
+
+        // Add mystery markers (not in the episode list)
+        const mysteryMarkers = L.layerGroup();
+        
+        // Cairo, Egypt
+        const cairoMarker = L.marker([30.0444, 31.2357], { icon: mysteryIcon })
+            .bindPopup(`
+                <div class="mystery-popup">
+                    <div class="mystery-emoji">🥺🥺🥺</div>
+                    <div class="mystery-text">A special place for my M&M</div>
+                </div>
+            `);
+        mysteryMarkers.addLayer(cairoMarker);
+        
+        // Kuwait
+        const kuwaitMarker = L.marker([29.3759, 47.9774], { icon: mysteryIcon })
+            .bindPopup(`
+                <div class="mystery-popup">
+                    
+                    <div class="mystery-text">hehe</div>
+                </div>
+            `);
+        mysteryMarkers.addLayer(kuwaitMarker);
+        
+        mysteryMarkers.addTo(map);
+
+        // Populate episode list
+        const episodeList = document.getElementById('episodeList');
+        let currentEpisodes = [...episodes];
+        
+        function renderEpisodeList() {
+            episodeList.innerHTML = '';
+            
+            // Sort episodes by season and episode number to keep them in order
+            let sortedEpisodes = [...currentEpisodes].sort((a, b) => {
+                // First sort by season
+                if (a.season !== b.season) {
+                    return a.season - b.season;
+                }
+                // Then sort by episode number within the season
+                return a.id - b.id;
+            });
+            
+            sortedEpisodes.forEach(episode => {
+                const episodeElement = document.createElement('div');
+                episodeElement.className = 'episode-item';
+                episodeElement.dataset.id = episode.id;
+                
+                let featuredIcon = '';
+                if (episode.featured) {
+                    featuredIcon = '<i class="fas fa-star" style="color: #ffcc00; margin-right: 5px;"></i>';
+                }
+                
+                episodeElement.innerHTML = `
+                    <div class="episode-number">${episode.number}</div>
+                    <div class="episode-title">${featuredIcon}${episode.title}</div>
+                    <div class="episode-monster">${episode.monster}</div>
+                    <div class="episode-location">
+                        <i class="fas fa-map-marker-alt"></i> ${episode.locationName}
+                    </div>
+                    <div class="episode-rating">
+                        <i class="fas fa-star"></i> ${episode.rating}
+                    </div>
+                `;
+                
+                episodeElement.addEventListener('click', () => {
+                    // Remove active class from all episodes
+                    document.querySelectorAll('.episode-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked episode
+                    episodeElement.classList.add('active');
+                    
+                    // Find corresponding marker and open its popup
+                    const markerInfo = markers.find(m => m.id === episode.id);
+                    if (markerInfo) {
+                        map.setView(episode.location, 6);
+                        markerInfo.marker.openPopup();
+                    }
+                });
+                
+                episodeList.appendChild(episodeElement);
+            });
+            
+            // Update stats
+            document.getElementById('totalEpisodes').textContent = currentEpisodes.length;
+            
+            const uniqueMonsters = [...new Set(currentEpisodes.map(ep => ep.monster.split(',')[0].trim()))];
+            document.getElementById('totalMonsters').textContent = uniqueMonsters.length;
+            
+            const uniqueLocations = [...new Set(currentEpisodes.map(ep => ep.locationName))];
+            document.getElementById('totalLocations').textContent = uniqueLocations.length;
+            
+            // Set first episode as active by default if none is active
+            if (!document.querySelector('.episode-item.active') && episodeList.firstChild) {
+                episodeList.firstChild.classList.add('active');
+            }
+        }
+        
+        // Initial render
+        renderEpisodeList();
+
+        // Filter functionality
+        const seasonFilter = document.getElementById('seasonFilter');
+        const monsterFilter = document.getElementById('monsterFilter');
+        
+        function applyFilters() {
+            const seasonValue = seasonFilter.value;
+            const monsterValue = monsterFilter.value;
+            
+            let filteredEpisodes = [...episodes];
+            
+            // Apply season filter
+            if (seasonValue !== 'all') {
+                filteredEpisodes = filteredEpisodes.filter(episode => episode.season == seasonValue);
+            }
+            
+            // Apply monster filter
+            if (monsterValue !== 'all') {
+                filteredEpisodes = filteredEpisodes.filter(episode => 
+                    episode.monster.toLowerCase().includes(monsterValue.toLowerCase())
+                );
+            }
+            
+            currentEpisodes = filteredEpisodes;
+            renderEpisodeList();
+            
+            // Update markers on map
+            markerGroup.clearLayers();
+            markers.forEach(markerInfo => {
+                const isVisible = currentEpisodes.some(ep => ep.id === markerInfo.id);
+                if (isVisible) {
+                    markerGroup.addLayer(markerInfo.marker);
+                }
+            });
+        }
+        
+        seasonFilter.addEventListener('change', applyFilters);
+        monsterFilter.addEventListener('change', applyFilters);
+
+        // Map controls
+        document.getElementById('resetView').addEventListener('click', function() {
+            map.setView([39.8283, -98.5795], 4);
+        });
+        
+        let markersVisible = true;
+        let mysteryVisible = true;
+        
+        document.getElementById('toggleMarkers').addEventListener('click', function() {
+            if (markersVisible) {
+                markerGroup.removeFrom(map);
+                markersVisible = false;
+                this.innerHTML = '<i class="fas fa-map-marker-alt"></i> Show Episodes';
+            } else {
+                markerGroup.addTo(map);
+                markersVisible = true;
+                this.innerHTML = '<i class="fas fa-map-marker-alt"></i> Hide Episodes';
+            }
+        });
+        
+        document.getElementById('showMysteryMarkers').addEventListener('click', function() {
+            if (mysteryVisible) {
+                mysteryMarkers.removeFrom(map);
+                mysteryVisible = false;
+                this.innerHTML = '<i class="fas fa-question"></i> Show Mystery';
+            } else {
+                mysteryMarkers.addTo(map);
+                mysteryVisible = true;
+                this.innerHTML = '<i class="fas fa-question"></i> Hide Mystery';
+            }
+        });
+        
+        document.getElementById('showAllEpisodes').addEventListener('click', function() {
+            seasonFilter.value = 'all';
+            monsterFilter.value = 'all';
+            applyFilters();
+        });
+    </script>
+</body>
+</html>
